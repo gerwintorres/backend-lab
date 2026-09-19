@@ -1,20 +1,14 @@
 class Cart:
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.items: dict[str, dict[str, float | int]] = {}
         
     def add(self, name: str, price: float, amount: int = 1) -> None:
         
-        if not isinstance(name, str):
-            raise TypeError("Product name must be a string")
-        elif not isinstance(price, (int, float)):
-            raise TypeError("Product price must be a number")
-        elif not isinstance(amount, int):
-            raise TypeError("Product amount must be an integer")
-        elif price < 0:
+        if price < 0:
             raise ValueError("Product price must be a non-negative number")
-        elif amount < 0:
-            raise ValueError("Product amount must be a non-negative integer")
+        elif amount < 1:
+            raise ValueError("Product amount must be greater than 0")
 
         if name in self.items:
             self.items[name]["amount"] += amount
@@ -29,9 +23,7 @@ class Cart:
         Raises:
             ValueError: If the product is not in the cart.
         """
-        if not isinstance(name, str):
-            raise TypeError("Product name must be a string")
-        elif name not in self.items:
+        if name not in self.items:
             raise ValueError(f"Product {name} isn't in the cart")
         
         del self.items[name]
@@ -53,16 +45,14 @@ class Cart:
         Raises:
             ValueError: If the discount is not between 0 and 100.
         """
-        if not isinstance(percent, (int, float)):
-            raise TypeError("Discount value must be a number")
-        elif percent < 0 or percent > 100:
+        if percent < 0 or percent > 100:
             raise ValueError("Discount value must be between 0 and 100")
            
         return self.total() * (1 - percent * 0.01)
     
     def __len__(self) -> int:
-        return len(self.items.keys())
+        return len(self.items)
     
     def __repr__(self) -> str:
-        return f"Cart({self.__len__()} items, total: {self.total()})"
+        return f"Cart({len(self)} items, total: {self.total()})"
 

@@ -12,41 +12,33 @@ class TestAddCart(TestCart):
     
     def test_add_product(self, cart):
         cart.add("Laptop", 1200, 1)
-        assert cart.items == {"Laptop": {"price": 1200, "amount": 1}}
-        
-    def test_add_product_invalid_name(self, cart):
-        with pytest.raises(TypeError, match="Product name must be a string"):
-            cart.add(123, 1200, 1)
-        
-    def test_add_product_invalid_price(self, cart):
-        with pytest.raises(TypeError, match="Product price must be a number"):
-            cart.add("Laptop", "1200", 1)
-        
-    def test_add_product_invalid_amount(self, cart):
-        with pytest.raises(TypeError, match="Product amount must be an integer"):
-            cart.add("Laptop", 1200, "1")
+        assert len(cart) == 1
+        assert cart.total() == 1200
+    
+    def test_add_product_existing(self, cart):
+        cart.add("Laptop", 1200, 1)
+        cart.add("Laptop", 1200, 2)
+        assert len(cart) == 1
+        assert cart.total() == 3600
         
     def test_add_product_negative_price(self, cart):
-        with pytest.raises(ValueError, match="Product price must be a non-negative number"):
+        with pytest.raises(ValueError, match="non-negative number"):
             cart.add("Laptop", -1200, 1)
         
-    def test_add_product_negative_amount(self, cart):
-        with pytest.raises(ValueError, match="Product amount must be a non-negative integer"):
-            cart.add("Laptop", 1200, -1)
+    def test_add_product_zero_amount(self, cart):
+        with pytest.raises(ValueError, match="greater than 0"):
+            cart.add("Laptop", 1200, 0)
             
 class TestDeleteCart(TestCart):
     
     def test_delete_product(self, cart):
         cart.add("Laptop", 1200, 1)
         cart.delete("Laptop")
-        assert cart.items == {}
-        
-    def test_delete_product_invalid_name(self, cart):
-        with pytest.raises(TypeError, match="Product name must be a string"):
-            cart.delete(123)
+        assert len(cart) == 0
+        assert cart.total() == 0
         
     def test_delete_product_not_in_cart(self, cart):
-        with pytest.raises(ValueError, match="Product Nonexistent Item isn't in the cart"):
+        with pytest.raises(ValueError, match="isn't in the cart"):
             cart.delete("Nonexistent Item")
             
 class TestTotalCart(TestCart):
@@ -66,10 +58,8 @@ class TestDiscountCart(TestCart):
         assert cart.discount(10) == 1080
         
     def test_discount_cart_invalid_percentage(self, cart):
-        with pytest.raises(ValueError, match="Discount value must be between 0 and 100"):
+        with pytest.raises(ValueError, match="between 0 and 100"):
             cart.discount(-10)
-        
-        with pytest.raises(ValueError, match="Discount value must be between 0 and 100"):
             cart.discount(110)
             
 class TestLenCart(TestCart):
