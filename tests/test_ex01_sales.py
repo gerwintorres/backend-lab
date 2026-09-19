@@ -30,8 +30,6 @@ class TestTopProducts:
         with pytest.raises(ValueError, match="n must be a positive integer"):
             top_products(transactions, -1)
             
-        
-
     def test_top_products_n_greater_than_unique_products(self, transactions):
         result = top_products(transactions, 10)
         assert len(result) == 5
