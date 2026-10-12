@@ -1,10 +1,6 @@
 import functools
 import time
 from collections.abc import Callable
-from typing import ParamSpec, TypeVar
-
-P = ParamSpec("P")
-R = TypeVar("R")
 
 
 def timer[**P, R](func: Callable[P, R]) -> Callable[P, R]:
