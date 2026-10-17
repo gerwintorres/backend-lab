@@ -1,7 +1,13 @@
+from __future__ import annotations
+
 import math
 from collections import defaultdict
+from collections.abc import Iterator
 from contextlib import contextmanager
 from numbers import Real
+from typing import Any
+
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 
 class CatalogError(Exception):
@@ -34,8 +40,19 @@ class InsufficientStockError(CatalogError):
     """
 
 
+class ProductIn(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    name: str = Field(..., min_length=1)
+    price: float = Field(..., ge=0.0, strict=True)
+    category: str = Field(..., min_length=1)
+    stock: int = Field(default=0, ge=0)
+
+
 class Product:
     def __init__(self, name: str, price: float, category: str, stock: int = 0) -> None:
+        self._price: float
+        self._stock: int
         if not isinstance(name, str) or not name.strip():
             raise InvalidProductError("Product name must be a non-empty string.")
         if not isinstance(category, str) or not category.strip():
@@ -50,10 +67,6 @@ class Product:
     def price(self) -> float:
         return self._price
 
-    @property
-    def stock(self) -> int:
-        return self._stock
-
     @price.setter
     def price(self, value: float) -> None:
         if (
@@ -64,6 +77,10 @@ class Product:
         ):
             raise InvalidProductError("Price must be a finite non-negative number.")
         self._price = value
+
+    @property
+    def stock(self) -> int:
+        return self._stock
 
     @stock.setter
     def stock(self, value: int) -> None:
@@ -120,6 +137,21 @@ class Catalog:
             )
         self.products[sku].stock -= quantity
 
+    def add_from_input(self, sku: str, product_data: dict[Any, Any]) -> None:
+        self._validate_sku(sku)
+        try:
+            product_in = ProductIn(**product_data)
+        except ValidationError as error:
+            raise InvalidProductError(f"Invalid product data: {error}") from error
+
+        product = Product(
+            name=product_in.name,
+            price=product_in.price,
+            category=product_in.category,
+            stock=product_in.stock,
+        )
+        self.add(sku, product)
+
     def __len__(self) -> int:
         return len(self.products)
 
@@ -132,7 +164,7 @@ class Catalog:
             raise InvalidProductError("SKU must be a non-empty string.")
 
     @contextmanager
-    def transaction(self):
+    def transaction(self) -> Iterator[Catalog]:
         """
         Context manager for catalog transactions.
         Rolls back changes if an exception occurs.

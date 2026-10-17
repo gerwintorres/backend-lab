@@ -1,4 +1,5 @@
 import pytest
+from pydantic import ValidationError
 
 from workshop.ex07_catalog import (
     Catalog,
@@ -7,6 +8,7 @@ from workshop.ex07_catalog import (
     InvalidProductError,
     Product,
     ProductAlreadyExistsError,
+    ProductIn,
     ProductNotFoundError,
 )
 
@@ -125,6 +127,98 @@ class TestCatalog:
     def test_reduce_stock_requires_positive_integer(self, catalog, quantity):
         with pytest.raises(InvalidProductError, match="Quantity"):
             catalog.reduce_stock("KB-001", quantity)
+
+
+class TestCatalogAddFromInput:
+    def test_add_from_input(self):
+        catalog = Catalog()
+
+        catalog.add_from_input(
+            "KB-002",
+            {
+                "name": "Mouse",
+                "price": 25.0,
+                "category": "Technology",
+                "stock": 20,
+            },
+        )
+
+        product = catalog.get("KB-002")
+
+        assert isinstance(product, Product)
+        assert product.name == "Mouse"
+        assert product.price == 25.0
+        assert product.category == "Technology"
+        assert product.stock == 20
+
+    @pytest.mark.parametrize("sku", ["", "   ", None])
+    def test_add_from_input_rejects_invalid_sku(self, sku):
+        catalog = Catalog()
+
+        with pytest.raises(InvalidProductError, match="SKU"):
+            catalog.add_from_input(
+                sku,
+                {
+                    "name": "Mouse",
+                    "price": 25.0,
+                    "category": "Technology",
+                },
+            )
+
+    def test_add_from_input_rejects_duplicate_sku(self, catalog):
+        with pytest.raises(ProductAlreadyExistsError, match="KB-001"):
+            catalog.add_from_input(
+                "KB-001",
+                {
+                    "name": "Another keyboard",
+                    "price": 100.0,
+                    "category": "Technology",
+                },
+            )
+
+    @pytest.mark.parametrize(
+        ("field", "value"),
+        [
+            ("price", -1),
+            ("stock", -1),
+        ],
+    )
+    def test_product_in_rejects_negative_values(self, field, value):
+        data = {
+            "name": "Mouse",
+            "price": 25.0,
+            "category": "Technology",
+            "stock": 10,
+        }
+        data[field] = value
+
+        with pytest.raises(ValidationError, match=field):
+            ProductIn(**data)
+
+    @pytest.mark.parametrize(
+        ("product_data", "field"),
+        [
+            ({"price": 25.0, "category": "Technology"}, "name"),
+            ({"name": "", "price": 25.0, "category": "Technology"}, "name"),
+            ({"name": "   ", "price": 25.0, "category": "Technology"}, "name"),
+            ({"name": "Mouse", "price": -1, "category": "Technology"}, "price"),
+            ({"name": "Mouse", "price": 25.0}, "category"),
+            (
+                {"name": "Mouse", "price": 25.0, "category": "Technology", "stock": -1},
+                "stock",
+            ),
+        ],
+    )
+    def test_add_from_input_translates_validation_error(self, product_data, field):
+        catalog = Catalog()
+
+        with pytest.raises(InvalidProductError) as exc_info:
+            catalog.add_from_input("MOUSE-001", product_data)
+
+        message = str(exc_info.value)
+        assert message.startswith("Invalid product data:")
+        assert field in message
+        assert "MOUSE-001" not in catalog
 
 
 class TestTransaction:
