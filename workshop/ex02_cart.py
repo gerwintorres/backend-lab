@@ -1,6 +1,14 @@
+from typing import TypedDict
+
+
+class CartItem(TypedDict):
+    price: float
+    amount: int
+
+
 class Cart:
     def __init__(self) -> None:
-        self.items: dict[str, dict[str, float | int]] = {}
+        self.items: dict[str, CartItem] = {}
 
     def add(self, name: str, price: float, amount: int = 1) -> None:
 
@@ -28,7 +36,7 @@ class Cart:
         del self.items[name]
 
     def total(self) -> float:
-        total = 0
+        total: float = 0
         for item in self.items.values():
             total += item["price"] * item["amount"]
 

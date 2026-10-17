@@ -5,12 +5,12 @@ from pathlib import Path
 
 
 @contextmanager
-def read_csv(file_path: str | Path) -> Iterator[csv.DictReader]:
+def read_csv(file_path: str | Path) -> Iterator[csv.DictReader[str]]:
     """
     Open a CSV file and close it when the caller leaves the context.
     """
     with open(file_path, encoding="utf-8", newline="") as file:
-        reader = csv.DictReader(file)
+        reader: csv.DictReader[str] = csv.DictReader(file)
         yield reader
 
 

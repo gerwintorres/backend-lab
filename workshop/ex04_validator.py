@@ -15,7 +15,7 @@ class RequiredFieldError(ErrorValidator):
 class InvalidValueError(ErrorValidator):
     """Raised when a field has an invalid value."""
 
-    def __init__(self, field_name: str, value, message: str):
+    def __init__(self, field_name: str, value: object, message: str):
         super().__init__(f"Field {field_name!r} is invalid: {value} - {message}")
 
 
@@ -29,7 +29,7 @@ class Product(TypedDict):
 valid_categories = {"tech", "clothing", "home", "sport"}
 
 
-def validate_product(data: dict) -> Product:
+def validate_product(data: dict[str, str | float | int]) -> Product:
     """Validates and normalize a product dictionary.
 
     Returns:

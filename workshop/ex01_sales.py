@@ -1,7 +1,15 @@
 from collections import Counter, defaultdict
+from typing import TypedDict
 
 
-def top_products(transactions: list, n: int) -> list[tuple[str, int]]:
+class Transaction(TypedDict):
+    product: str
+    category: str
+    amount: float
+    city: str
+
+
+def top_products(transactions: list[Transaction], n: int) -> list[tuple[str, int]]:
     """Return the top n products by sales amount.
 
     Args:
@@ -22,7 +30,7 @@ def top_products(transactions: list, n: int) -> list[tuple[str, int]]:
     return top_n
 
 
-def total_per_category(transactions: list) -> dict[str, float]:
+def total_per_category(transactions: list[Transaction]) -> dict[str, float]:
     """Return the total sales amount per category.
 
     Args:
@@ -32,7 +40,7 @@ def total_per_category(transactions: list) -> dict[str, float]:
         A dictionary with category names
         as keys and their total sales amounts as values.
     """
-    total_amount = defaultdict(float)
+    total_amount: defaultdict[str, float] = defaultdict(float)
 
     for t in transactions:
         total_amount[t["category"]] += t["amount"]
@@ -40,7 +48,7 @@ def total_per_category(transactions: list) -> dict[str, float]:
     return dict(total_amount)
 
 
-def city_per_categories(transactions: list) -> dict[str, int]:
+def city_per_categories(transactions: list[Transaction]) -> dict[str, int]:
     """Return the number of unique cities with sales per category.
     Args:
         transactions: A list of transaction dictionaries.
@@ -48,7 +56,7 @@ def city_per_categories(transactions: list) -> dict[str, int]:
         A dictionary with category names as keys and the
         number of unique cities as values.
     """
-    categories = defaultdict(set)
+    categories: defaultdict[str, set[str]] = defaultdict(set)
 
     for t in transactions:
         categories[t["category"]].add(t["city"])
